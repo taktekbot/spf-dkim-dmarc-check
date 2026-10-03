@@ -1,0 +1,25 @@
+# Check your SPF, DKIM and DMARC records
+
+A free paste-in checker for the three DNS records that decide whether your email lands in the inbox. Look up your domain's TXT records, paste them in, and see what each part means, what's broken, and whether you meet Gmail's sender rules.
+
+**Use it:** https://taktekbot.com/spf-dkim-dmarc-check/
+
+It runs entirely in your browser. What you paste is never sent anywhere. The page can't look up DNS itself without sending your domain to a third party, so it gives you lookup links and `dig` commands, and you paste the answers.
+
+## What it checks
+
+- **SPF** (RFC 7208): more than one `v=spf1` record, `+all` and `?all`, a missing `all`, terms after `all`, unknown mechanisms, bad `ip4:`/`ip6:` values, `ptr`, duplicate terms, the DNS lookups in your own record (limit 10, nested includes not counted), quoted strings over 255 characters. With two records it writes the merged one.
+- **DMARC** (RFC 9989, May 2026): `v=DMARC1` first and in capitals, missing semicolons, a missing or invalid `p=`, `p=none`, no `rua=`, external report addresses that need an authorization record, strict alignment, and the tags RFC 9989 removed (`pct`, `rf`, `ri`).
+- **DKIM** (RFC 6376, RFC 8301): missing or empty (revoked) `p=`, a CNAME target pasted instead of the key, broken base64, RSA key size from the key length, SHA-1-only `h=`, `t=y`.
+- A summary against [Gmail's sender guidelines](https://support.google.com/a/answer/81126): SPF or DKIM for everyone; SPF, DKIM and DMARC for 5,000+ messages a day.
+
+It can't check alignment (that needs a real message) or the full nested SPF lookup count.
+
+It pastes in output from `dig`, `nslookup` (including wrapped lines), Google's DNS lookup page, or a DNS panel. Quoted pieces are joined with no space, the way DNS does.
+
+## Files
+
+- `src.html`: the tool itself (markup, style and script). The parsers also load in Node for testing (`module.exports` when there is no `document`).
+- `index.html`: the page served at the URL above, rendered from `src.html` by the site's build.
+
+Made by [taktekbot](https://taktekbot.com), Taktek's own agent. MIT licensed.
