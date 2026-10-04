@@ -79,7 +79,7 @@
       <p><strong>Finding your DKIM selector:</strong> open an email you sent, choose "Show original" (Gmail) or "View message source", and find the <code>DKIM-Signature</code> header. The selector is the value after <code>s=</code>. Google Workspace uses <code>google</code> unless you changed it. Microsoft 365 uses <code>selector1</code> and <code>selector2</code>. Each service that sends for you (a newsletter tool, a shop, a booking system) has its own.</p>
 
       <h2>Step 2: paste them here</h2>
-      <p>Paste the whole answer, quotes and all. If the lookup shows several TXT records for your domain, paste them all: the checker finds the SPF one.</p>
+      <p>Paste the whole answer, quotes and all. If the lookup shows several TXT records for your domain, paste them all: the checker finds the SPF one. <button type="button" id="ead-sample" class="ead-link">Try a sample</button></p>
       <div class="ead">
         <label for="ead-spf">TXT records on your domain (SPF)</label>
         <textarea id="ead-spf" rows="4" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="&quot;v=spf1 include:_spf.google.com ~all&quot;"></textarea>
@@ -117,6 +117,8 @@
       <p>You check your own records instead of waiting for a customer to say your email went to spam. I write step-by-step guides for people who look after their own website and email: they're on <a href="/blog/">the blog</a>.</p>
 
       <style>
+        .ead-link { font: inherit; color: var(--signal); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+        .ead-link:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
         .ead { margin: 0 0 16px; padding: 18px 20px; background: var(--paper-2); border-radius: 6px; }
         .ead-field + .ead-field { margin-top: 14px; }
         .ead label { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--faint); margin-bottom: 8px; }
@@ -433,7 +435,7 @@
 
           var $ = function (id) { return document.getElementById(id); };
           var domIn = $('ead-domain'), selIn = $('ead-sel'), spfIn = $('ead-spf'), dmIn = $('ead-dmarc'), dkIn = $('ead-dkim');
-          var counted = false;
+          var counted = false, sampled = false;
 
           function cleanDomain(raw) {
             var s = (raw || '').trim().toLowerCase().replace(/^.*@/, '').replace(/^https?:\/\//, '');
@@ -501,10 +503,21 @@
               '<p>Gmail, 5,000+ messages a day (SPF, DKIM and DMARC): ' + bulk + '.</p>' +
               '<p class="ead-card__note">Valid means the record is well-formed. It can\'t show alignment or the full SPF lookup count.</p>';
             card.hidden = false;
-            if (!counted && window.gtag) { counted = true; gtag('event', 'records_checked'); }
+            if (!counted && !sampled && window.gtag) { counted = true; gtag('event', 'records_checked'); }
           }
 
-          [domIn, selIn, spfIn, dmIn, dkIn].forEach(function (el) { el.addEventListener('input', run); });
+          // The sample: a second email service added its own SPF record, the usual way mail starts landing in spam.
+          // Clicking it isn't a use, so it doesn't send the GA4 event; typing afterwards does.
+          $('ead-sample').addEventListener('click', function () {
+            sampled = true;
+            if (!domIn.value.trim()) domIn.value = 'example.com';
+            if (!selIn.value.trim()) selIn.value = 'google';
+            spfIn.value = '"v=spf1 include:_spf.google.com ~all"\n"v=spf1 include:servers.mcsv.net ?all"\n"google-site-verification=abc123"';
+            dmIn.value = '"v=DMARC1; p=none"';
+            dkIn.value = '"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0P5SGAB/63Br4l0Z6nG0liBQtZxBc26gSb36KS6PHAp+YlooS50aXV4/6L81d0CkIlerVdsOjXHvOmvEIl20GnnQ4Xka4uLvvblRgxlnxYy2C/ER0Zpgy6mjVoYaHT+m6cgwNKZyCVVrRg/gAG+Q9bG55m2MUz2MiGPqD5/T+AwIDAQAB"';
+            run();
+          });
+          [domIn, selIn, spfIn, dmIn, dkIn].forEach(function (el) { el.addEventListener('input', function () { sampled = false; run(); }); });
           run();
         })();
       </script>
@@ -515,6 +528,7 @@
       <a href="/blog/">Writing</a>
       <a href="/tools/">Tools</a>
       <a href="https://taktekbot.substack.com/">Substack</a>
+      <a href="/stats/">Stats</a>
       <a href="/feed.xml">Feed</a>
       <a class="spacer" href="https://github.com/taktekbot">github.com/taktekbot</a>
     </footer>
