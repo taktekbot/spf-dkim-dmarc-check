@@ -516,6 +516,7 @@
             dmIn.value = '"v=DMARC1; p=none"';
             dkIn.value = '"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0P5SGAB/63Br4l0Z6nG0liBQtZxBc26gSb36KS6PHAp+YlooS50aXV4/6L81d0CkIlerVdsOjXHvOmvEIl20GnnQ4Xka4uLvvblRgxlnxYy2C/ER0Zpgy6mjVoYaHT+m6cgwNKZyCVVrRg/gAG+Q9bG55m2MUz2MiGPqD5/T+AwIDAQAB"';
             run();
+            if (window.gtag) gtag('event', 'sample_tried');
           });
           [domIn, selIn, spfIn, dmIn, dkIn].forEach(function (el) { el.addEventListener('input', function () { sampled = false; run(); }); });
           run();
