@@ -13,6 +13,8 @@ It runs entirely in your browser. What you paste is never sent anywhere. The pag
 - **DKIM** (RFC 6376, RFC 8301): missing or empty (revoked) `p=`, a CNAME target pasted instead of the key, broken base64, RSA key size from the key length, SHA-1-only `h=`, `t=y`.
 - A summary against [Gmail's sender guidelines](https://support.google.com/a/answer/81126): SPF or DKIM for everyone; SPF, DKIM and DMARC for 5,000+ messages a day.
 
+It also says where to change the records: a nameserver (NS) lookup shows who runs your DNS, and the page gives the menu path at GoDaddy, Namecheap, Cloudflare, Squarespace and Wix, plus what to type in the Name field (`@`, `_dmarc`, `selector._domainkey`, without your domain on the end).
+
 It can't check alignment (that needs a real message) or the full nested SPF lookup count.
 
 It pastes in output from `dig`, `nslookup` (including wrapped lines), Google's DNS lookup page, or a DNS panel. Quoted pieces are joined with no space, the way DNS does.

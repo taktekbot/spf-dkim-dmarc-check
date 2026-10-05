@@ -19,7 +19,7 @@ category: DeveloperApplication
         </div>
       </div>
       <div id="ead-lookups"></div>
-      <p>The links open Google's free DNS lookup in a new tab. That sends your domain name to Google, not to this page. If you'd rather not, run the commands in a terminal; on Windows, use <code>nslookup -type=TXT</code> with the same names.</p>
+      <p>The links open Google's free DNS lookup in a new tab. That sends your domain name to Google, not to this page. If you'd rather not, run the commands in a terminal; on Windows, use <code>nslookup -type=TXT</code> (or <code>-type=NS</code>) with the same names.</p>
       <p><strong>Finding your DKIM selector:</strong> open an email you sent, choose "Show original" (Gmail) or "View message source", and find the <code>DKIM-Signature</code> header. The selector is the value after <code>s=</code>. Google Workspace uses <code>google</code> unless you changed it. Microsoft 365 uses <code>selector1</code> and <code>selector2</code>. Each service that sends for you (a newsletter tool, a shop, a booking system) has its own.</p>
 
       <h2>Step 2: paste them here</h2>
@@ -51,13 +51,31 @@ category: DeveloperApplication
       </ol>
       <p>DNS changes can take from a few minutes to a day to show up, depending on the record's TTL. Look the record up again before you decide a change didn't work.</p>
 
+      <h2>Where to change these records</h2>
+      <p>Your records live with whoever runs your DNS. That is often, but not always, the company you bought the domain from. Use the "who runs your DNS" lookup above: the answer names your nameservers, and the company in those names is where you add records.</p>
+      <ul>
+        <li><strong>Names with <code>domaincontrol.com</code></strong>: GoDaddy. Domain Portfolio, pick the domain, then <strong>DNS</strong>, then <strong>Add New Record</strong>.</li>
+        <li><strong><code>registrar-servers.com</code></strong>: Namecheap. Domain List, <strong>Manage</strong> next to the domain, the <strong>Advanced DNS</strong> tab, then <strong>Add new record</strong>.</li>
+        <li><strong><code>ns.cloudflare.com</code></strong>: Cloudflare. Pick the domain, then <strong>DNS</strong>, <strong>Records</strong>, <strong>Add record</strong>.</li>
+        <li><strong>Squarespace</strong> (this includes domains that moved over from Google Domains): <strong>DNS</strong>, <strong>DNS Settings</strong>, then <strong>Custom Records</strong> and <strong>Add record</strong>.</li>
+        <li><strong>Wix</strong>: Domains, the <strong>Domain Actions</strong> menu next to the domain, <strong>Manage DNS Records</strong>. If your domain is only pointed at Wix, not on Wix's nameservers, the records go with your domain company instead.</li>
+        <li><strong>Anything else</strong>: search your provider's help for "add TXT record". Your web host's name in the nameservers means the records are in its control panel.</li>
+      </ul>
+      <p>The field that trips people up is <strong>Name</strong> (some panels say Host). Most panels add your domain to the end for you, so type only the part before it:</p>
+      <ul>
+        <li>SPF: <code>@</code>, which means the domain itself. Wix wants the field left blank instead.</li>
+        <li>DMARC: <code>_dmarc</code>, not <code>_dmarc.example.com</code>.</li>
+        <li>DKIM: <code>selector._domainkey</code>, with your service's selector, for example <code>google._domainkey</code>.</li>
+      </ul>
+      <p>Type the full name into a panel that adds the domain, and the record ends up at <code>_dmarc.example.com.example.com</code>, where nobody looks. If the lookup above still shows nothing an hour after you saved, check the Name field first.</p>
+
       <h2>What this can't tell you</h2>
       <ul>
         <li>Whether the records are really published. It reads what you paste. The lookup links above show what the world sees.</li>
         <li>The full SPF lookup count. It counts the lookups in your own record; each <code>include:</code> adds its own, and you'd look those up one by one.</li>
         <li>Alignment. DMARC passes only when the domain SPF or DKIM checked matches the domain in the visible From: address. That needs a real message: send one to a Gmail address, choose "Show original", and read the SPF, DKIM and DMARC lines at the top.</li>
       </ul>
-      <p>Sources: <a href="https://support.google.com/a/answer/81126">Gmail's email sender guidelines</a>, <a href="https://www.rfc-editor.org/rfc/rfc7208.html">RFC 7208 (SPF)</a>, <a href="https://www.rfc-editor.org/rfc/rfc6376.html">RFC 6376 (DKIM)</a>, <a href="https://www.rfc-editor.org/rfc/rfc8301.html">RFC 8301 (DKIM key sizes)</a>, and <a href="https://www.rfc-editor.org/rfc/rfc9989.html">RFC 9989</a>, the DMARC update published in May 2026, which replaced RFC 7489 and removed the <code>pct</code>, <code>rf</code> and <code>ri</code> tags.</p>
+      <p>Sources: <a href="https://support.google.com/a/answer/81126">Gmail's email sender guidelines</a>, <a href="https://www.rfc-editor.org/rfc/rfc7208.html">RFC 7208 (SPF)</a>, <a href="https://www.rfc-editor.org/rfc/rfc6376.html">RFC 6376 (DKIM)</a>, <a href="https://www.rfc-editor.org/rfc/rfc8301.html">RFC 8301 (DKIM key sizes)</a>, and <a href="https://www.rfc-editor.org/rfc/rfc9989.html">RFC 9989</a>, the DMARC update published in May 2026, which replaced RFC 7489 and removed the <code>pct</code>, <code>rf</code> and <code>ri</code> tags. Where to add records: <a href="https://www.godaddy.com/help/add-a-txt-record-19232">GoDaddy</a>, <a href="https://www.namecheap.com/support/knowledgebase/article.aspx/317/2237/how-do-i-add-txtspfdkimdmarc-records-for-my-domain/">Namecheap</a>, <a href="https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-zone-apex/">Cloudflare</a>, <a href="https://support.squarespace.com/hc/en-us/articles/31120980444429-Adding-TXT-records">Squarespace</a>, <a href="https://support.wix.com/en/article/adding-or-updating-txt-records-in-your-wix-account">Wix</a>.</p>
       <p>You check your own records instead of waiting for a customer to say your email went to spam. I write step-by-step guides for people who look after their own website and email: they're on <a href="/blog/">the blog</a>.</p>
 
       <style>
@@ -385,17 +403,18 @@ category: DeveloperApplication
             var s = (raw || '').trim().toLowerCase().replace(/^.*@/, '').replace(/^https?:\/\//, '');
             return s.split('/')[0].replace(/^www\./, '').replace(/[^a-z0-9.-]/g, '').replace(/\.$/, '');
           }
-          function dig(name) { return 'https://toolbox.googleapps.com/apps/dig/#TXT/' + name; }
+          function dig(type, name) { return 'https://toolbox.googleapps.com/apps/dig/#' + type + '/' + name; }
 
           function renderLookups() {
             var d = cleanDomain(domIn.value), s = selIn.value.trim().replace(/[^A-Za-z0-9_.-]/g, '') || 'google';
             var shown = d || 'example.com';
             var rows = [
-              ['SPF', shown], ['DMARC', '_dmarc.' + shown], ['DKIM', s + '._domainkey.' + shown]
+              ['SPF', shown, 'TXT'], ['DMARC', '_dmarc.' + shown, 'TXT'], ['DKIM', s + '._domainkey.' + shown, 'TXT'],
+              ['who runs your DNS', shown, 'NS']
             ];
             $('ead-lookups').innerHTML = '<ul class="ead-look">' + rows.map(function (r) {
-              var link = d ? '<a href="' + esc(dig(r[1])) + '" target="_blank" rel="noopener">Look up ' + r[0] + '</a>' : '<span>' + r[0] + '</span>';
-              return '<li>' + link + ' <code>dig +short TXT ' + esc(r[1]) + '</code></li>';
+              var link = d ? '<a href="' + esc(dig(r[2], r[1])) + '" target="_blank" rel="noopener">Look up ' + r[0] + '</a>' : '<span>' + r[0] + '</span>';
+              return '<li>' + link + ' <code>dig +short ' + r[2] + ' ' + esc(r[1]) + '</code></li>';
             }).join('') + '</ul>';
           }
 
