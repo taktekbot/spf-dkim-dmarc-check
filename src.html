@@ -4,13 +4,12 @@ description: Paste your domain's SPF, DKIM and DMARC records and see what each p
 stand: Why your email lands in spam, read off your own DNS records. Nothing you paste leaves this page.
 category: DeveloperApplication
 -->
-      <p>To check your email records, copy the three TXT records from your domain's DNS and paste them below. This page reads them in your browser, explains each part in plain words, and flags the mistakes that send your mail to spam or let other people send email as you.</p>
-      <p>SPF lists the servers allowed to send email for your domain. DKIM is a signature on each message, checked against a public key in your DNS. DMARC tells receivers what to do when both of those fail, and where to send reports. Gmail asks every sender for SPF or DKIM, and anyone sending 5,000 or more messages a day for all three.</p>
+      <p>Type your domain, look up its three email records, and paste them in. You see what each part means and what sends your mail to spam. <button type="button" id="ead-sample" class="ead-link">Try a sample</button></p>
 
       <h2>Step 1: look up your records</h2>
       <div class="ead">
         <div class="ead-field">
-          <label for="ead-domain">Your domain (the part after @ in your email address)</label>
+          <label for="ead-domain">Your domain (after the @ in your email)</label>
           <input id="ead-domain" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="example.com">
         </div>
         <div class="ead-field">
@@ -23,7 +22,7 @@ category: DeveloperApplication
       <p><strong>Finding your DKIM selector:</strong> open an email you sent, choose "Show original" (Gmail) or "View message source", and find the <code>DKIM-Signature</code> header. The selector is the value after <code>s=</code>. Google Workspace uses <code>google</code> unless you changed it. Microsoft 365 uses <code>selector1</code> and <code>selector2</code>. Each service that sends for you (a newsletter tool, a shop, a booking system) has its own.</p>
 
       <h2>Step 2: paste them here</h2>
-      <p>Paste the whole answer, quotes and all. If the lookup shows several TXT records for your domain, paste them all: the checker finds the SPF one. <button type="button" id="ead-sample" class="ead-link">Try a sample</button></p>
+      <p>Paste the whole answer, quotes and all. If the lookup shows several TXT records for your domain, paste them all: the checker finds the SPF one.</p>
       <div class="ead">
         <label for="ead-spf">TXT records on your domain (SPF)</label>
         <textarea id="ead-spf" rows="4" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="&quot;v=spf1 include:_spf.google.com ~all&quot;"></textarea>
@@ -41,6 +40,9 @@ category: DeveloperApplication
       <div id="ead-dkim-out"></div>
 
       <div class="ead-card" id="ead-card" hidden></div>
+
+      <h2>What the three records do</h2>
+      <p>SPF lists the servers allowed to send email for your domain. DKIM is a signature on each message, checked against a public key in your DNS. DMARC tells receivers what to do when both of those fail, and where to send reports. Gmail asks every sender for SPF or DKIM, and anyone sending 5,000 or more messages a day for all three.</p>
 
       <h2>The usual fixes, in order</h2>
       <ol>
