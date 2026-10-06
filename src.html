@@ -113,7 +113,7 @@ category: DeveloperApplication
         .post .ead-card__note { font-family: var(--mono); font-size: 12px; color: var(--faint); }
       </style>
 
-      <script>
+      <script> // record checks (SPF, DMARC, DKIM) and the page wiring
         (function () {
           // PARSERS-START
           var KNOWN = {
@@ -193,7 +193,7 @@ category: DeveloperApplication
               res.fixed = 'v=spf1 ' + merged.concat([tail && !/^\+?all$/i.test(tail) ? tail : '~all']).join(' ');
             }
             var rec = res.fixed || spf[0].value, terms = rec.split(/\s+/).slice(1).filter(Boolean);
-            var allAt = -1, redirect = null, seenTerm = {}, bad = res.items.some(function (x) { return x.level === 'bad'; });
+            var allAt = -1, redirect = null, seenTerm = {}, seenMod = {}, ignored = [], bad = res.items.some(function (x) { return x.level === 'bad'; });
             terms.forEach(function (t, idx) {
               var low = t.toLowerCase();
               if (seenTerm[low]) res.items.push(item('warn', code(t) + ' appears twice. Remove the copy.'));
@@ -201,6 +201,10 @@ category: DeveloperApplication
               var mod = /^([a-z][a-z0-9_.-]*)=(.*)$/i.exec(t);
               if (mod) {
                 var name = mod[1].toLowerCase();
+                if ((name === 'redirect' || name === 'exp') && seenMod[name] && seenMod[name] !== low) {
+                  res.items.push(item('bad', code(name + '=') + ' appears twice with different values. SPF allows it once; a second one makes the whole record fail (permerror). Keep one.')); bad = true;
+                }
+                seenMod[name] = seenMod[name] || low;
                 if (name === 'redirect') {
                   redirect = mod[2]; res.lookups++;
                   res.terms.push(item('ok', code(t) + ': use the SPF record of ' + code(mod[2]) + ' instead, if nothing before it matched. 1 lookup.'));
@@ -216,7 +220,7 @@ category: DeveloperApplication
               if (!m) { res.items.push(item('bad', code(t) + ' isn\'t valid SPF. One broken term makes the whole record fail (permerror).')); bad = true; return; }
               var q = m[1] || '+', mech = m[2].toLowerCase(), arg = m[3] || '', val = arg.charAt(0) === ':' ? arg.slice(1) : '';
               var qWord = q === '+' ? '' : ' (' + QUAL[q] + ')';
-              if (allAt >= 0) return;
+              if (allAt >= 0) { ignored.push(t); return; }
               switch (mech) {
                 case 'all':
                   allAt = idx;
@@ -251,14 +255,17 @@ category: DeveloperApplication
                   if (!(mech === 'ip4' ? okIp4(val) : okIp6(val))) {
                     res.items.push(item('bad', code(t) + ' isn\'t a valid ' + (mech === 'ip4' ? 'IPv4' : 'IPv6') + ' address' + (/[g-z]/i.test(val) && mech === 'ip4' ? '. Names go in ' + code('a:') + ' or ' + code('include:') + ', not ' + code('ip4:') : '') + '. One broken term makes the whole record fail.')); bad = true; break;
                   }
+                  var len = val.indexOf('/') >= 0 ? +val.split('/')[1] : -1;
+                  if (len === 0 && q === '+') { res.items.push(item('bad', code(t) + ' covers every ' + (mech === 'ip4' ? 'IPv4' : 'IPv6') + ' address on the internet, so anyone can send as you. That works like ' + code('+all') + '. List only your own servers\' addresses.')); bad = true; break; }
+                  if (mech === 'ip4' && len > 0 && len <= 8 && q === '+') res.items.push(item('warn', code(t) + ' covers ' + Math.pow(2, 32 - len).toLocaleString('en-US') + ' addresses, far more than one business sends from. Check the number after the slash.'));
                   res.terms.push(item('ok', code(t) + qWord + ': ' + (val.indexOf('/') >= 0 ? 'the addresses in this range' : 'this one address') + ' may send as you. No lookup.'));
                   break;
                 default:
                   res.items.push(item('bad', code(t) + ' isn\'t an SPF mechanism. Unknown mechanisms make the whole record fail (permerror).')); bad = true;
               }
             });
-            if (allAt >= 0 && allAt < terms.length - 1) {
-              res.items.push(item('warn', 'Everything after ' + code(terms[allAt]) + ' is ignored: ' + code(terms.slice(allAt + 1).join(' ')) + '. Move it before the ' + code('all') + '.'));
+            if (ignored.length) {
+              res.items.push(item('warn', 'Receivers stop reading at ' + code(terms[allAt]) + ', so this is ignored: ' + code(ignored.join(' ')) + '. Move it before the ' + code('all') + '.'));
             }
             if (allAt >= 0 && redirect !== null) res.items.push(item('warn', code('redirect=') + ' is ignored when the record has an ' + code('all') + '.'));
             if (allAt < 0 && redirect === null) res.items.push(item('warn', 'No ' + code('all') + ' at the end, so mail from servers not listed gets a "neutral" result, which protects nothing. End the record with ' + code('~all') + '.'));
@@ -486,4 +493,4 @@ category: DeveloperApplication
           [domIn, selIn, spfIn, dmIn, dkIn].forEach(function (el) { el.addEventListener('input', function () { sampled = false; run(); }); });
           run();
         })();
-      </script>
+      </script><!-- end record checks -->
