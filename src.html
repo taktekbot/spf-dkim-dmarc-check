@@ -19,7 +19,7 @@ category: DeveloperApplication
       </div>
       <div id="ead-lookups"></div>
       <p>The links open Google's free DNS lookup in a new tab. That sends your domain name to Google, not to this page. If you'd rather not, run the commands in a terminal; on Windows, use <code>nslookup -type=TXT</code> (or <code>-type=NS</code>) with the same names.</p>
-      <p><strong>Finding your DKIM selector:</strong> open an email you sent, choose "Show original" (Gmail) or "View message source", and find the <code>DKIM-Signature</code> header. The selector is the value after <code>s=</code>. Google Workspace uses <code>google</code> unless you changed it. Microsoft 365 uses <code>selector1</code> and <code>selector2</code>. Each service that sends for you (a newsletter tool, a shop, a booking system) has its own.</p>
+      <p><strong>Finding your DKIM selector:</strong> open an email you sent, choose "Show original" (Gmail) or "View message source", and find the <code>DKIM-Signature</code> header. The selector is the value after <code>s=</code>. Google Workspace uses <code>google</code> unless you changed it. Microsoft 365 uses <code>selector1</code> and <code>selector2</code>, with only one active at a time, so look up both: the unused one can print just a CNAME line, or "not found" in <code>nslookup</code>. Each service that sends for you (a newsletter tool, a shop, a booking system) has its own.</p>
 
       <h2>Step 2: paste them here</h2>
       <p>Paste the whole answer, quotes and all. If the lookup shows several TXT records for your domain, paste them all: the checker finds the SPF one.</p>
@@ -374,6 +374,7 @@ category: DeveloperApplication
             var joined = parseTxt(text).map(function (r) { return r.value; }).join('');
             if (joined.indexOf('=') < 0 && /_domainkey/i.test(joined)) {
               res.items.push(item('bad', 'This is a CNAME target, not the key itself. Look up the TXT record at that name, or at ' + code('selector._domainkey.yourdomain') + ' (the lookup follows the CNAME), and paste the result.'));
+              if (/onmicrosoft\.com|dkim\.mail\.microsoft/i.test(joined)) res.items.push(item('warn', 'This points to Microsoft 365. Microsoft keeps only one of its two selectors active, so if nothing comes back after this line, that selector isn\'t in use. Look up the other one (' + code('selector2') + ' if this was ' + code('selector1') + ') before deciding DKIM is missing.'));
               return res;
             }
             var i = joined.search(/(^|[;\s])(v|k|p|h|t|s|n)\s*=/i);
