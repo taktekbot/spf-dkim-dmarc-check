@@ -17,7 +17,7 @@ It also says where to change the records: a nameserver (NS) lookup shows who run
 
 It can't check alignment (that needs a real message) or the full nested SPF lookup count.
 
-It pastes in output from `dig`, `nslookup` (including wrapped lines), Google's DNS lookup page, or a DNS panel. Quoted pieces are joined with no space, the way DNS does.
+It pastes in output from `dig`, `nslookup` (including wrapped lines), Google's DNS lookup page, or a DNS panel. Quoted pieces are joined with no space, the way DNS does. Each line counts as its own record, except the piece-per-line block Windows `nslookup` prints after `text =`, and a base64 line right after an unfinished DKIM key. Bare verification tokens like `"_tr70kb8d…"` in a big `dig` answer stay separate from the SPF line.
 
 ## Files
 

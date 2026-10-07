@@ -182,13 +182,17 @@
           };
 
           // Turn pasted dig/nslookup/DNS-panel text into record strings. Quoted
-          // pieces on one line are joined with no space, as DNS does. A quoted line
-          // that doesn't start like a record continues the one before (nslookup wraps).
+          // pieces on one line are joined with no space, as DNS does. Windows nslookup
+          // prints "name text =" and then one piece per line: those lines continue one
+          // record. Elsewhere each line is its own record (dig prints bare verification
+          // tokens like "_tr70kb8d..." that must not stick to the SPF line), except a
+          // base64 line right after an unfinished DKIM key.
           function parseTxt(text) {
-            var recs = [];
+            var recs = [], block = 0;
             (text || '').split(/\r?\n/).forEach(function (line) {
               line = line.trim();
               if (!line) return;
+              if (/\btext\s*=$/i.test(line)) { block = 1; return; }
               var chunks = [], m, re = /"((?:[^"\\]|\\.)*)"/g;
               while ((m = re.exec(line))) chunks.push(m[1].replace(/\\(.)/g, '$1'));
               var value;
@@ -198,8 +202,10 @@
                 value = i > 0 && !/[=;]/.test(line.slice(0, i)) ? line.slice(i) : line;
               }
               if (!recs.length || !chunks.length) value = value.replace(/^\s+/, '');
-              var cont = chunks.length && line.charAt(0) === '"' && recs.length &&
-                !/^[A-Za-z0-9_.-]+\s*=/.test(value);
+              var quoted = chunks.length && line.charAt(0) === '"';
+              var cont = quoted && recs.length && (block === 2 ||
+                (!block && /\bp=[A-Za-z0-9+\/]+$/.test(recs[recs.length - 1].value) && /^[A-Za-z0-9+\/=]+$/.test(value)));
+              block = quoted && block ? 2 : 0;
               if (cont) { var last = recs[recs.length - 1]; last.value += value; last.chunks = last.chunks.concat(chunks); }
               else recs.push({ value: value, chunks: chunks });
             });
