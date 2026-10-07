@@ -136,7 +136,11 @@ category: DeveloperApplication
             (text || '').split(/\r?\n/).forEach(function (line) {
               line = line.trim();
               if (!line) return;
+              // nslookup's own lines (server, headings, "can't find") aren't records
+              if (/^(server|address(es)?|name|aliases)\s*:|^(non-)?authoritative answers?\b|^;;|^\*{2,}|^dns request timed out|^timeout was/i.test(line)) { block = 0; return; }
               if (/\btext\s*=$/i.test(line)) { block = 1; return; }
+              var cn = line.match(/\bcanonical name\s*=\s*(\S+)$/i);
+              if (cn) line = cn[1];
               var chunks = [], m, re = /"((?:[^"\\]|\\.)*)"/g;
               while ((m = re.exec(line))) chunks.push(m[1].replace(/\\(.)/g, '$1'));
               var value;
@@ -378,6 +382,11 @@ category: DeveloperApplication
             if (!text.trim()) return null;
             var res = { items: [], terms: [], status: 'bad' };
             var joined = parseTxt(text).map(function (r) { return r.value; }).join('');
+            if (!joined && /can'?t find|nxdomain|no answer/i.test(text)) {
+              res.items.push(item('bad', 'The lookup found no record at this name, so there is no DKIM key with this selector. Check the selector: open an email you sent and read the value after ' + code('s=') + ' in its ' + code('DKIM-Signature') + ' header.'));
+              if (/selector[12]\._domainkey/i.test(text)) res.items.push(item('warn', 'Microsoft 365 keeps only one of its two selectors active. Look up the other one (' + code('selector2') + ' if this was ' + code('selector1') + ', and the other way round) before deciding DKIM is missing.'));
+              return res;
+            }
             if (joined.indexOf('=') < 0 && /_domainkey/i.test(joined)) {
               res.items.push(item('bad', 'This is a CNAME target, not the key itself. Look up the TXT record at that name, or at ' + code('selector._domainkey.yourdomain') + ' (the lookup follows the CNAME), and paste the result.'));
               if (/onmicrosoft\.com|dkim\.mail\.microsoft/i.test(joined)) res.items.push(item('warn', 'This points to Microsoft 365. Microsoft keeps only one of its two selectors active, so if nothing comes back after this line, that selector isn\'t in use. Look up the other one (' + code('selector2') + ' if this was ' + code('selector1') + ') before deciding DKIM is missing.'));
