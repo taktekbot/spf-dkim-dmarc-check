@@ -48,10 +48,11 @@ category: DeveloperApplication
       <ol>
         <li><strong>One SPF record, not two.</strong> Each new email service tells you to "add a TXT record". Add its <code>include:</code> to your existing SPF line instead. Two <code>v=spf1</code> records make SPF fail for everything.</li>
         <li><strong>Turn on DKIM in each service that sends for you.</strong> Most give you a record to add (often a CNAME), then a button to start signing. Adding the record alone doesn't sign anything.</li>
-        <li><strong>Start DMARC at <code>p=none</code> with a report address.</strong> Read the reports for two to four weeks. They list every server sending as your domain, including the ones you forgot.</li>
+        <li><strong>Start DMARC at <code>p=none</code> with a report address.</strong> Read the reports for two to four weeks. They list every server sending as your domain, including the ones you forgot. They arrive as .zip or .gz files of XML; <a href="/dmarc-report-reader/">the DMARC report reader</a> opens them in your browser.</li>
         <li><strong>Then tighten it.</strong> When all your real mail passes, move to <code>p=quarantine</code>, then <code>p=reject</code>. This is the step that stops other people sending email as you.</li>
       </ol>
       <p>DNS changes can take from a few minutes to a day to show up, depending on the record's TTL. Look the record up again before you decide a change didn't work.</p>
+      <p>Records all pass and mail still lands in spam? The email's own headers say which check failed for that message. <a href="/blog/why-business-emails-go-to-spam/">How to read them, and the fix for each failure</a>.</p>
 
       <h2>Where to change these records</h2>
       <p>Your records live with whoever runs your DNS. That is often, but not always, the company you bought the domain from. Use the "who runs your DNS" lookup above: the answer names your nameservers, and the company in those names is where you add records.</p>

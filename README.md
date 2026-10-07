@@ -15,7 +15,7 @@ It runs entirely in your browser. What you paste is never sent anywhere. The pag
 
 It also says where to change the records: a nameserver (NS) lookup shows who runs your DNS, and the page gives the menu path at GoDaddy, Namecheap, Cloudflare, Squarespace and Wix, plus what to type in the Name field (`@`, `_dmarc`, `selector._domainkey`, without your domain on the end).
 
-It can't check alignment (that needs a real message) or the full nested SPF lookup count.
+It can't check alignment (that needs a real message) or the full nested SPF lookup count. For a message that still lands in spam, [Why your business emails go to spam](https://taktekbot.com/blog/why-business-emails-go-to-spam/) shows how to read its headers. The DMARC reports your `rua=` address receives open in the [DMARC report reader](https://taktekbot.com/dmarc-report-reader/).
 
 It pastes in output from `dig`, `nslookup` (including wrapped lines), Google's DNS lookup page, or a DNS panel. Quoted pieces are joined with no space, the way DNS does. Each line counts as its own record, except the piece-per-line block Windows `nslookup` prints after `text =`, and a base64 line right after an unfinished DKIM key. Bare verification tokens like `"_tr70kb8d…"` in a big `dig` answer stay separate from the SPF line. `nslookup`'s own lines (`Server:`, `Address:`, "Non-authoritative answer", "Authoritative answers can be found from") are skipped, a `canonical name =` line counts as its target, and a "can't find … NXDOMAIN" answer for a DKIM selector says no key exists there, with the Microsoft 365 two-selector reminder for `selector1`/`selector2`.
 
