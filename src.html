@@ -112,6 +112,9 @@ category: DeveloperApplication
         .post .ead-card p + p { margin-top: 8px; }
         .post .ead-card__big { font-size: 22px; line-height: 1.3; color: var(--ink); font-weight: 500; }
         .post .ead-card__note { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+        .post .ead-copy { font-family: var(--mono); font-size: 13px; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+        .post .ead-copy:hover { border-color: var(--signal); color: var(--signal); }
+        .post .ead-copy:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
       </style>
 
       <script> // record checks (SPF, DMARC, DKIM) and the page wiring
@@ -541,10 +544,40 @@ category: DeveloperApplication
               '<p>SPF: ' + st(spf) + ' · DKIM: ' + st(dk) + ' · DMARC: ' + st(dm) + (dm && dm.policy ? ' (p=' + esc(dm.policy) + ')' : '') + '</p>' +
               '<p>Gmail, any sender (SPF or DKIM): ' + any + '.</p>' +
               '<p>Gmail, 5,000+ messages a day (SPF, DKIM and DMARC): ' + bulk + '.</p>' +
-              '<p class="ead-card__note">Valid means the record is well-formed. It can\'t show alignment or the full SPF lookup count.</p>';
+              '<p class="ead-card__note">Valid means the record is well-formed. It can\'t show alignment or the full SPF lookup count.</p>' +
+              '<p class="ead-card__note"><button type="button" class="ead-copy" id="ead-copy">Copy a summary to send</button> to whoever runs your domain or email.</p>';
             card.hidden = false;
+            summary = makeSummary(d, big, spf, dk, dm, any, bulk);
             if (!counted && !sampled && window.gtag) { counted = true; gtag('event', 'records_checked'); }
           }
+
+          // A plain-text version of the result, for the visitor to paste to whoever manages their DNS or email.
+          // Only the FIX and CHECK lines go in: those are the ones someone has to act on.
+          var summary = '';
+          function plain(html) { var t = document.createElement('div'); t.innerHTML = html; return t.textContent.replace(/\s+/g, ' ').trim(); }
+          function makeSummary(d, big, spf, dk, dm, any, bulk) {
+            var lines = ['Email records' + (d ? ' for ' + d : '') + ': ' + big, ''];
+            [['SPF', spf], ['DKIM' + (selIn.value.trim() ? ' (selector ' + selIn.value.trim() + ')' : ''), dk], ['DMARC', dm]].forEach(function (r) {
+              var res = r[1];
+              lines.push(r[0] + ': ' + (!res ? 'not checked' : (res.status === 'ok' ? 'valid' : 'needs a fix') + (res.policy ? ' (p=' + res.policy + ')' : '')));
+              if (!res) return;
+              res.items.filter(function (x) { return x.level === 'bad' || x.level === 'warn'; }).forEach(function (x) {
+                lines.push('- ' + (x.level === 'bad' ? 'Fix: ' : 'Check: ') + plain(x.html));
+              });
+              if (res.fixed) lines.push('- One record instead of several: ' + res.fixed);
+            });
+            lines.push('', 'Gmail, any sender (SPF or DKIM): ' + any + '.', 'Gmail, 5,000+ messages a day (SPF, DKIM and DMARC): ' + bulk + '.');
+            lines.push('', 'Valid means the record is well-formed. It can\'t show alignment or the full SPF lookup count.');
+            lines.push('Checked with https://taktekbot.com/spf-dkim-dmarc-check/');
+            return lines.join('\n');
+          }
+          $('ead-card').addEventListener('click', function (e) {
+            var b = e.target.closest('#ead-copy'); if (!b || !summary) return;
+            var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy a summary to send'; }, 1500); };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(summary).then(done, function () { b.textContent = 'Couldn’t copy: your browser blocked it'; });
+            else b.textContent = 'Couldn’t copy: your browser blocked it';
+            if (!sampled && window.gtag) gtag('event', 'summary_copied');
+          });
 
           // The sample: a second email service added its own SPF record, the usual way mail starts landing in spam.
           // Clicking it isn't a use, so it doesn't send the GA4 event; typing afterwards does.

@@ -21,6 +21,8 @@ It pastes in output from `dig`, `nslookup` (including wrapped lines), Google's D
 
 When a box holds something other than its own record, it says what it holds and checks nothing, instead of reporting the record missing: an email's headers (with the SPF, DKIM and DMARC results from `Authentication-Results`, and the key's lookup name built from a `DKIM-Signature`'s `s=` and `d=`), another box's record (an SPF record in the DMARC box, say), a web page's code, or a sentence. Those boxes count as "not checked" in the summary.
 
+Under the summary, "Copy a summary to send" puts a plain-text version of the result on your clipboard: each record's verdict, its FIX and CHECK lines, the merged SPF record if you had two, and the Gmail rules. You paste it into an email to whoever runs your domain or email. Nothing is sent for you; the copy only counts a GA4 `summary_copied` event, and not after "Try a sample".
+
 ## Files
 
 - `src.html`: the tool itself (markup, style and script). The parsers also load in Node for testing (`module.exports` when there is no `document`).
